@@ -1,0 +1,26 @@
+name: asl_recognition
+description: "Aplicacion Flutter de reconocimiento de lenguaje de senas ASL con interfaz minimalista."
+publish_to: 'none'
+
+version: 2.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  camera: ^0.10.5
+  http: ^1.1.0
+  image: ^4.1.7
+  permission_handler: ^12.0.1
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
