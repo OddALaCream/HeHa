@@ -1,8 +1,8 @@
 name: asl_recognition
-description: "Aplicacion Flutter de reconocimiento de lenguaje de senas ASL con interfaz minimalista."
+description: "Aplicacion Flutter de reconocimiento de lenguaje de senas ASL con GetX, arquitectura limpia y backend MediaPipe + SigLIP2."
 publish_to: 'none'
 
-version: 2.0.0+1
+version: 3.0.0+1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -11,10 +11,19 @@ dependencies:
   flutter:
     sdk: flutter
 
-  camera: ^0.10.5
+  # Gestion de estado, dependencias y rutas
+  get: ^4.6.6
+
+  # Cliente HTTP para el servidor de reconocimiento
   http: ^1.1.0
-  image: ^4.1.7
+
+  # Sintesis de voz (TTS) para pronunciar la palabra formada
+  flutter_tts: ^4.0.2
+
+  # Camara y permisos
+  camera: ^0.10.5
   permission_handler: ^12.0.1
+
   cupertino_icons: ^1.0.2
 
 dev_dependencies:

@@ -9,6 +9,13 @@
         android:name="android.hardware.camera"
         android:required="true" />
 
+    <!-- Necesario para que flutter_tts encuentre el motor de voz en Android 11+ -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:label="ASL Recognition"
         android:icon="@mipmap/ic_launcher"

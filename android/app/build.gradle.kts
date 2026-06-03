@@ -15,6 +15,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // No comprimir el modelo ONNX para permitir su carga eficiente.
+    androidResources {
+        noCompress += "onnx"
+    }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }

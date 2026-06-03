@@ -1,430 +1,131 @@
-# 📱 ASL RECOGNITION - Aplicación Flutter
+# 📱 ASL Recognition — Flutter (GetX + Clean Architecture)
 
-Aplicación **Flutter** para reconocimiento de lenguaje de señas (ASL) con interfaz **minimalista en blanco y negro**.
+Aplicación **Flutter** para reconocimiento del alfabeto de lenguaje de señas
+americano (ASL, A-Z). La app captura la cámara y envía las imágenes a un
+**servidor REST** (`flask_server.py`) que detecta la mano con **MediaPipe**,
+la recorta y la clasifica con el modelo **SigLIP2**
+(`prithivMLmods/Alphabet-Sign-Language-Detection`).
+
+Construida con **GetX** (estado + inyección de dependencias) sobre una
+**arquitectura limpia** por capas.
 
 ---
 
-## 🎯 Arquitectura
+## 🏗️ Arquitectura
 
 ```
-FRONTEND (Flutter)
-    ↓
-    └─→ Captura cámara
-    └─→ Envía imagen a servidor
-    
-BACKEND (Python Flask)
-    ↓
-    └─→ Recibe imagen
-    └─→ Detecta mano (MediaPipe)
-    └─→ Reconoce letra (SigLIP2)
-    └─→ Retorna resultado (JSON)
-    
-FRONTEND (Flutter)
-    ↓
-    └─→ Muestra letra + confianza
+lib/
+├── main.dart                         # StatelessWidget + GetMaterialApp
+└── app/
+    ├── core/                         # Tema y constantes
+    │   ├── constants/app_constants.dart      (URL del servidor, timeouts)
+    │   └── theme/app_theme.dart
+    ├── domain/                       # Reglas de negocio (Dart puro)
+    │   ├── entities/recognition_result.dart
+    │   └── repositories/recognition_repository.dart      (abstracción)
+    ├── data/                         # Implementación + acceso a datos
+    │   ├── datasources/asl_rest_datasource.dart          (HTTP)
+    │   └── repositories/recognition_repository_impl.dart
+    └── presentation/                 # UI (todo StatelessWidget)
+        ├── bindings/recognition_binding.dart             (DI)
+        ├── controllers/recognition_controller.dart       (GetxController)
+        ├── pages/recognition_page.dart
+        └── widgets/                  (camera_pane, control_panel, ...)
 ```
 
----
+**Regla de dependencia:** `presentation → domain ← data`. La presentación
+depende de la abstracción `RecognitionRepository`; la implementación concreta
+vive en `data` y usa el datasource REST. Inversión total de dependencias.
 
-## 📋 Requisitos
+### GetX
 
-### Hardware
-- Android 7.0+ (API 24+) O iOS 11.0+
-- Cámara
-- Conexión a red local
-
-### Software
-- Flutter 3.0+
-- Dart 3.0+
-- Python 3.10+ (para servidor backend)
-
-### Servidor Backend
-- En la misma red local
-- O en `localhost` si se prueba desde computadora
+- `GetMaterialApp` como raíz.
+- `RecognitionController` (`GetxController`) con estado reactivo `.obs`.
+- `RecognitionBinding` inyecta datasource → repositorio → controlador con
+  `Get.lazyPut`.
+- Las vistas son `StatelessWidget` (`GetView`) y se reconstruyen solo con `Obx`.
 
 ---
 
-## 🚀 Instalación
+## 🤖 Pipeline de IA (servidor)
 
-### 1️⃣ Instalar Dependencias de Flutter
+```
+App Flutter  ──(JPEG)──▶  flask_server.py
+                              │
+                              ├─ MediaPipe Hands  → detecta y recorta la mano
+                              ├─ SigLIP2          → clasifica la letra (A-Z)
+                              └─ JSON {letter, confidence, hand_detected}
+App Flutter  ◀──(JSON)─────────┘
+```
+
+> El recorte de mano con MediaPipe es clave: SigLIP2 fue afinado con recortes
+> cerrados de la mano, por eso el servidor recorta antes de clasificar.
+
+### Levantar el servidor
+
+**Opción A — Docker (recomendada):**
 
 ```bash
-# Descargar dependencias
-flutter pub get
+cd ../sign_language_recognition_v2
+docker compose up --build        # queda en http://0.0.0.0:5000
 ```
 
-### 2️⃣ Preparar Backend Python
+Los modelos se descargan en el primer arranque y se persisten en el volumen
+`asl-models`, así que los siguientes arranques son inmediatos.
 
-En la carpeta `sign_language_recognition_v2/`:
+**Opción B — Python local:**
 
 ```bash
-# Instalar dependencias del servidor
-pip install -r requirements.txt
+cd ../sign_language_recognition_v2
 pip install -r requirements_server.txt
-
-# Ejecutar servidor
-python flask_server.py
+python flask_server.py           # queda en http://0.0.0.0:5000
 ```
 
-El servidor estará en: `http://localhost:5000`
+En el primer arranque descarga el modelo SigLIP2 (~372 MB) y
+`hand_landmarker.task` de MediaPipe.
 
-### 3️⃣ Ejecutar App Flutter
+### Conectar la app al servidor
 
-#### En Android
-
-```bash
-flutter run -d android
-```
-
-#### En iOS
-
-```bash
-flutter run -d ios
-```
-
-#### En Web
-
-```bash
-flutter run -d web
-```
-
-#### En computadora (debug)
-
-```bash
-flutter run -d windows
-# o
-flutter run -d macos
-# o
-flutter run -d linux
-```
-
----
-
-## 🎮 Cómo Usar
-
-### En el dispositivo
-
-1. **La app se abre** y muestra la cámara
-2. **Haz una seña** frente a la cámara (letra A-Z)
-3. **Presiona CAPTURAR**
-4. La app **envía la foto al servidor**
-5. El servidor **reconoce la letra**
-6. **Se muestra el resultado**:
-   - Letra detectada (grande)
-   - Confianza (en %)
-   - Barra de progreso
-
-### Controles
-
-| Botón | Acción |
-|-------|--------|
-| **CAPTURAR** | Tomar foto y enviar a servidor |
-| **LIMPIAR** | Borrar resultado anterior |
-
----
-
-## ⚙️ Configuración
-
-### Cambiar IP del Servidor
-
-Edita `lib/main.dart` línea donde dice:
+Edita la IP en `lib/app/core/constants/app_constants.dart`:
 
 ```dart
-Uri.parse('http://localhost:5000/recognize'),
+static const String serverUrl = 'http://TU_IP_LOCAL:5000';
 ```
 
-Cambia `localhost` a la IP del servidor, por ejemplo:
-
-```dart
-Uri.parse('http://192.168.1.100:5000/recognize'),
-```
-
-### Permisos
-
-La app solicita automáticamente:
-- ✅ **Acceso a cámara** (necesario)
-- ✅ **Acceso a archivos** (para capturar)
+`TU_IP_LOCAL` es la IP de la máquina que corre el servidor, en la misma red
+Wi-Fi que el dispositivo (p. ej. `http://192.168.1.208:5000`).
 
 ---
 
-## 🏗️ Estructura
-
-```
-proyecto/
-├── lib/
-│   └── main.dart                    ← APP FLUTTER
-├── pubspec.yaml                     ← Dependencias Flutter
-├── android/
-│   └── app/src/main/AndroidManifest.xml
-├── ios/
-│   └── Runner/Info.plist
-└── sign_language_recognition_v2/
-    ├── flask_server.py              ← SERVIDOR BACKEND
-    ├── requirements.txt             ← Dependencias Python
-    └── requirements_server.txt      ← Dependencias Flask
-```
-
----
-
-## 🔌 API del Servidor
-
-### POST /recognize
-
-Envía una imagen para reconocimiento.
-
-**Request:**
-```
-Content-Type: multipart/form-data
-Body: image (archivo)
-```
-
-**Response:**
-```json
-{
-  "letter": "A",
-  "confidence": 0.87,
-  "hand_detected": true,
-  "success": true
-}
-```
-
-### GET /health
-
-Verifica estado del servidor.
-
-**Response:**
-```json
-{
-  "status": "ok",
-  "models_loaded": true,
-  "device": "cpu"
-}
-```
-
-### GET /info
-
-Información del servidor.
-
-**Response:**
-```json
-{
-  "name": "ASL Recognition Server",
-  "version": "2.0.0",
-  "supported_letters": ["A", "B", "C", ...],
-  "device": "cpu"
-}
-```
-
----
-
-## 🎨 Interfaz
-
-### Layout Horizontal
-
-```
-┌────────────────────────────────┬─────────────────┐
-│                                │                 │
-│   PREVIEW CÁMARA               │  PANEL DERECHO  │
-│   1280x720                      │  - Título       │
-│                                │  - Letra grande │
-│  [Esquinas minimalista]        │  - Confianza    │
-│                                │  - Botones      │
-│                                │                 │
-└────────────────────────────────┴─────────────────┘
-```
-
-### Colores
-
-- **Fondo**: Blanco puro
-- **Texto primario**: Negro
-- **Texto secundario**: Gris (#808080)
-- **Bordes**: Negro fino
-- **Botones**: Negro/Blanco
-
----
-
-## 🐛 Solución de Problemas
-
-### "Connection refused"
-
-**Problema**: La app no puede conectarse al servidor
-
-**Soluciones**:
-1. Asegúrate que Flask está corriendo: `python flask_server.py`
-2. Verifica IP correcta en `main.dart`
-3. Ambos en la misma red local
-4. Firewall: permite puerto 5000
-
-### "Camera not available"
-
-**Problema**: La cámara no está disponible
-
-**Soluciones**:
-1. Reinicia la app
-2. Cierra otras apps que usen cámara
-3. Verifica permisos (Settings → Apps → ASL Recognition)
-
-### "Image processing failed"
-
-**Problema**: Error procesando la imagen
-
-**Soluciones**:
-1. Asegúrate que el servidor está corriendo
-2. Revisa logs del servidor Flask
-3. Intenta nuevamente
-
-### App muy lenta
-
-**Problema**: Predicción lenta
-
-**Soluciones**:
-1. Reduce resolución de cámara
-2. Instala CUDA en servidor (si tienes GPU NVIDIA)
-3. Reduce calidad de la imagen antes de enviar
-
----
-
-## 📱 Compilación para Producción
-
-### Android APK
+## 🚀 Ejecución
 
 ```bash
-flutter build apk --release
-# Archivo: build/app/outputs/flutter-app.apk
+flutter pub get
+flutter run -d android        # o el dispositivo conectado
 ```
 
-### Android App Bundle
+Endpoints del servidor:
 
-```bash
-flutter build appbundle --release
-# Archivo: build/app/outputs/bundle/release/app-release.aab
-```
-
-### iOS App
-
-```bash
-flutter build ios --release
-# Abre en Xcode y completa el proceso
-```
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET  | `/health`    | Estado y si los modelos están cargados |
+| POST | `/recognize` | `multipart` campo `image` → `{letter, confidence, hand_detected}` |
+| GET  | `/info`      | Metadatos y letras soportadas |
 
 ---
 
-## 🔒 Permisos Requeridos
+## 🎮 Uso
 
-### Android
-- `android.permission.CAMERA` - Acceso a cámara
-- `android.permission.INTERNET` - Conexión de red
-- `android.permission.ACCESS_NETWORK_STATE` - Estado de red
-
-### iOS
-- `NSCameraUsageDescription` - Acceso a cámara
-- `NSLocalNetworkUsageDescription` - Red local
+1. La app abre la cámara y comprueba el servidor (botón **VERIFICAR** para
+   reintentar la conexión).
+2. Haz una seña (A-Z) dentro del recuadro de enfoque.
+3. La letra y su confianza aparecen en el panel (con animaciones).
+4. **EN VIVO/REANUDAR**: detección continua · **✕**: limpiar resultado.
 
 ---
 
-## 📊 Performance
+## 🔒 Permisos
 
-### Tiempos
-
-| Operación | Tiempo |
-|-----------|--------|
-| Captura | <100ms |
-| Envío de imagen | 100-500ms (depende red) |
-| Procesamiento servidor | 50-200ms (CPU) / 10-50ms (GPU) |
-| **Total** | 200-800ms |
-
-### Requisitos de Red
-
-- **Ancho de banda**: ~1-2 MB por predicción
-- **Latencia**: <100ms (recomendado)
-
----
-
-## 🎓 Ejemplo de Uso Personalizado
-
-### Cambiar servidor
-
-```dart
-// En _CameraScreenState._captureAndRecognize()
-const String serverUrl = 'http://tu-ip:5000/recognize';
-
-final request = http.MultipartRequest('POST', Uri.parse(serverUrl));
-```
-
-### Agregar validaciones
-
-```dart
-// Validar confianza antes de mostrar
-if (confidence < 0.6) {
-  // Mostrar advertencia
-}
-```
-
-### Guardar predicciones
-
-```dart
-// Agregar lista para guardar historial
-List<String> history = [];
-
-// En _captureAndRecognize()
-history.add('$_recognizedLetter at ${DateTime.now()}');
-```
-
----
-
-## 🚀 Mejoras Futuras
-
-- [ ] Construcción de palabras automática
-- [ ] Historial de predicciones
-- [ ] Estadísticas de precisión
-- [ ] Soporte offline (modelo local)
-- [ ] Exportar resultados
-- [ ] Modo de entrenamiento
-- [ ] Reconocimiento de gestos
-
----
-
-## 📚 Recursos
-
-- [Flutter Docs](https://flutter.dev/docs)
-- [Camera Package](https://pub.dev/packages/camera)
-- [HTTP Package](https://pub.dev/packages/http)
-- [Flask Docs](https://flask.palletsprojects.com/)
-- [MediaPipe](https://mediapipe.dev/)
-
----
-
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas:
-
-1. Fork el repositorio
-2. Crea rama con tu feature
-3. Haz commit de los cambios
-4. Envía Pull Request
-
----
-
-## 📝 Licencia
-
-Todas las librerías usadas tienen licencias open-source:
-- Flutter: BSD
-- Camera: BSD
-- HTTP: BSD
-- Flask: BSD
-- PyTorch: BSD
-- MediaPipe: Apache 2.0
-
----
-
-## 📞 Soporte
-
-- Revisa `TROUBLESHOOTING.md` en carpeta Python
-- Ejecuta `python verificar.py` para diagnóstico
-- Revisa logs del servidor Flask
-
----
-
-**Versión**: 2.0  
-**Última actualización**: Mayo 2026  
-**Estado**: ✅ Producción
+- **Android:** `CAMERA`, `INTERNET` (más `usesCleartextTraffic` para HTTP en
+  red local).
+- **iOS:** `NSCameraUsageDescription`, `NSLocalNetworkUsageDescription`.
