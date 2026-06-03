@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// Tarjeta que muestra la palabra formada por las senas detectadas y permite
+/// Tarjeta que muestra la palabra formada por las señas detectadas y permite
 /// editarla y pronunciarla. Incluye un indicador de carga en la cabecera que
-/// se enciende mientras el servidor procesa una sena.
+/// se enciende mientras el servidor procesa una seña.
 class WordBox extends StatelessWidget {
   const WordBox({
     super.key,

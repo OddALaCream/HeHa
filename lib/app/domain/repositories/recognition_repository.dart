@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import '../entities/recognition_result.dart';
 
-/// Contrato de la capa de dominio para reconocer senas.
+/// Contrato de la capa de dominio para reconocer señas.
 ///
 /// La presentacion depende de esta abstraccion, no de una implementacion
 /// concreta (inversion de dependencias). La capa de datos provee la

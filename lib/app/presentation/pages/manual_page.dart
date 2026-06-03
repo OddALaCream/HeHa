@@ -31,25 +31,15 @@ class ManualPage extends StatelessWidget {
           SizedBox(height: 22),
           _Step(
             number: '1',
-            icon: Icons.dns_outlined,
-            title: 'Enciende el servidor',
-            body:
-                'La app envia la imagen a un servidor que detecta la mano y '
-                'reconoce la letra. Asegurate de que el servidor este corriendo '
-                'y que el telefono este en la misma red. Pulsa VERIFICAR para '
-                'reintentar la conexion.',
-          ),
-          _Step(
-            number: '2',
             icon: Icons.front_hand_outlined,
-            title: 'Haz la sena',
+            title: 'Haz la seña',
             body:
-                'Coloca la mano dentro del recuadro de enfoque y manten la sena '
+                'Coloca la mano dentro del recuadro de enfoque y manten la seña '
                 'quieta un momento. Mientras se procesa veras un indicador de '
                 'carga; luego aparece la letra y su porcentaje de confianza.',
           ),
           _Step(
-            number: '3',
+            number: '2',
             icon: Icons.text_fields,
             title: 'Forma palabras',
             body:
@@ -58,7 +48,7 @@ class ManualPage extends StatelessWidget {
                 'ultima letra y la papelera para limpiar todo.',
           ),
           _Step(
-            number: '4',
+            number: '3',
             icon: Icons.volume_up_outlined,
             title: 'Escucha la voz',
             body:
@@ -67,7 +57,7 @@ class ManualPage extends StatelessWidget {
                 'palabra recien terminada.',
           ),
           _Step(
-            number: '5',
+            number: '4',
             icon: Icons.pause_circle_outline,
             title: 'Pausa y reanuda',
             body:
@@ -95,7 +85,7 @@ class _Intro extends StatelessWidget {
       child: const Padding(
         padding: EdgeInsets.all(18),
         child: Text(
-          'Esta app reconoce el alfabeto del lenguaje de senas americano '
+          'Esta app reconoce el alfabeto del lenguaje de señas americano '
           '(A-Z), forma palabras con las letras detectadas y las pronuncia '
           'en voz alta.',
           style: TextStyle(color: AppTheme.white, fontSize: 14, height: 1.4),

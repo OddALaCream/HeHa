@@ -67,7 +67,7 @@ class _AnimatedContent extends StatelessWidget {
           const SizedBox(height: 40),
           _MenuButton(
             icon: Icons.videocam_outlined,
-            title: 'RECONOCER SENAS',
+            title: 'RECONOCER SEÑAS',
             subtitle: 'Camara + voz en tiempo real',
             filled: true,
             onTap: () => Get.toNamed(Routes.recognition),

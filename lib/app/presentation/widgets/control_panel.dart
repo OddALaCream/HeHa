@@ -7,23 +7,42 @@ import 'result_box.dart';
 import 'status_box.dart';
 import 'word_box.dart';
 
-/// Panel lateral de control. Es un [StatelessWidget] que lee el estado
-/// reactivo del [RecognitionController] mediante `Obx`.
+/// Panel de control. Es un [StatelessWidget] que lee el estado reactivo del
+/// [RecognitionController] mediante `Obx`.
+///
+/// [scrollable] = true: trae su propio scroll y borde lateral (layout ancho,
+/// panel a un costado). = false: solo el contenido, para que el scroll lo
+/// gestione el padre (layout movil de una sola columna).
 class ControlPanel extends GetView<RecognitionController> {
-  const ControlPanel({super.key});
+  const ControlPanel({super.key, this.scrollable = true});
+
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
+    final content = Padding(
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: _children(),
+      ),
+    );
+
+    if (!scrollable) {
+      return ColoredBox(color: AppTheme.white, child: content);
+    }
+
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: AppTheme.white,
-        border: Border(left: BorderSide(color: AppTheme.black, width: 1)),
+        border: Border(top: BorderSide(color: AppTheme.black, width: 1)),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      child: SingleChildScrollView(child: content),
+    );
+  }
+
+  List<Widget> _children() {
+    return [
             const Text(
               'Verificacion ASL',
               style: TextStyle(
@@ -99,11 +118,8 @@ class ControlPanel extends GetView<RecognitionController> {
               ],
             ),
             const SizedBox(height: 10),
-            Obx(() => _LiveButton(controller: controller)),
-          ],
-        ),
-      ),
-    );
+            _LiveButton(controller: controller),
+    ];
   }
 
   ButtonStyle _outlinedStyle() {
@@ -123,34 +139,38 @@ class _LiveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final live = controller.liveEnabled.value;
-    final recognizing = controller.recognizing.value;
-    final label = live ? (recognizing ? 'DETECTANDO' : 'EN VIVO') : 'REANUDAR';
+    // El Obx lee los observables DENTRO de su closure (uso correcto).
+    return Obx(() {
+      final live = controller.liveEnabled.value;
+      final recognizing = controller.recognizing.value;
+      final ready = controller.cameraReady.value;
+      final label = live ? (recognizing ? 'DETECTANDO' : 'EN VIVO') : 'REANUDAR';
 
-    return FilledButton.icon(
-      onPressed: controller.cameraReady.value ? controller.toggleLive : null,
-      icon: recognizing
-          ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppTheme.white,
+      return FilledButton.icon(
+        onPressed: ready ? controller.toggleLive : null,
+        icon: recognizing
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppTheme.white,
+                ),
+              )
+            : Icon(
+                live ? Icons.pause_circle_outline : Icons.play_circle_outline,
+                size: 19,
               ),
-            )
-          : Icon(
-              live ? Icons.pause_circle_outline : Icons.play_circle_outline,
-              size: 19,
-            ),
-      label: Text(label),
-      style: FilledButton.styleFrom(
-        backgroundColor: AppTheme.black,
-        foregroundColor: AppTheme.white,
-        disabledBackgroundColor: const Color(0xFFBDBDBD),
-        disabledForegroundColor: AppTheme.white,
-        minimumSize: const Size.fromHeight(48),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      ),
-    );
+        label: Text(label),
+        style: FilledButton.styleFrom(
+          backgroundColor: AppTheme.black,
+          foregroundColor: AppTheme.white,
+          disabledBackgroundColor: const Color(0xFFBDBDBD),
+          disabledForegroundColor: AppTheme.white,
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        ),
+      );
+    });
   }
 }

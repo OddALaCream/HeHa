@@ -18,6 +18,8 @@ class RecognitionPage extends GetView<RecognitionController> {
           builder: (context, constraints) {
             final wide = constraints.maxWidth >= 860;
             if (wide) {
+              // Pantalla ancha: camara a la izquierda, panel lateral con
+              // su propio scroll a la derecha.
               return const Row(
                 children: [
                   Expanded(child: CameraPane()),
@@ -26,14 +28,13 @@ class RecognitionPage extends GetView<RecognitionController> {
               );
             }
 
-            final panelHeight = constraints.maxHeight < 680
-                ? constraints.maxHeight * 0.52
-                : 360.0;
-
-            return Column(
+            // Movil: zonas acotadas. La camara ocupa la parte superior y el
+            // panel la inferior; el panel scrollea SOLO dentro de su zona
+            // (nunca toda la pagina), evitando cualquier scroll infinito.
+            return const Column(
               children: [
-                const Expanded(child: CameraPane()),
-                SizedBox(height: panelHeight, child: const ControlPanel()),
+                Expanded(flex: 3, child: CameraPane()),
+                Expanded(flex: 4, child: ControlPanel()),
               ],
             );
           },

@@ -1,4 +1,4 @@
-/// Entidad de dominio que representa el resultado de clasificar una sena.
+/// Entidad de dominio que representa el resultado de clasificar una seña.
 ///
 /// Pertenece a la capa de dominio: es Dart puro, sin dependencias de Flutter
 /// ni de paquetes externos, de modo que la logica de negocio queda aislada.

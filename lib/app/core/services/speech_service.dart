@@ -4,7 +4,7 @@ import '../constants/app_constants.dart';
 
 /// Servicio de sintesis de voz (Text-To-Speech).
 ///
-/// Envuelve `flutter_tts` para pronunciar la palabra formada con las senas.
+/// Envuelve `flutter_tts` para pronunciar la palabra formada con las señas.
 /// Es un servicio de plataforma (salida), inyectado por GetX y usado por el
 /// controlador de presentacion.
 class SpeechService {

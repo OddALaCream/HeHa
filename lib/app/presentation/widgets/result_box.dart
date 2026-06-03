@@ -89,7 +89,7 @@ class ResultBox extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: AppTheme.grey),
                 ),
                 Text(
-                  result.handDetected ? 'SENA DETECTADA' : 'SIN SENA',
+                  result.handDetected ? 'SEÑA DETECTADA' : 'SIN SEÑA',
                   style: const TextStyle(
                     fontSize: 11,
                     color: AppTheme.black,

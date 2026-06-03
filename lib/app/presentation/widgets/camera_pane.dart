@@ -34,20 +34,36 @@ class CameraPane extends StatelessWidget {
                 );
               }
               // El preview cubre toda la seccion (recorta en vez de dejar
-              // franjas negras), escalando segun el aspecto del panel.
-              return LayoutBuilder(
-                builder: (context, constraints) {
-                  final paneAspect = constraints.maxWidth / constraints.maxHeight;
-                  var scale = paneAspect * camera.value.aspectRatio;
-                  if (scale < 1) scale = 1 / scale;
-                  return ClipRect(
-                    child: Transform.scale(
-                      scale: scale,
+              // franjas negras). Se usa OverflowBox + AspectRatio en vez de
+              // FittedBox/Transform porque la textura nativa de la camara se
+              // renderiza en blanco dentro de esos widgets.
+              return ClipRect(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final ar = camera.value.aspectRatio;
+                    var w = constraints.maxWidth;
+                    var h = w / ar;
+                    if (h < constraints.maxHeight) {
+                      h = constraints.maxHeight;
+                      w = h * ar;
+                    }
+                    return OverflowBox(
+                      minWidth: w,
+                      maxWidth: w,
+                      minHeight: h,
+                      maxHeight: h,
                       alignment: Alignment.center,
-                      child: Center(child: CameraPreview(camera)),
-                    ),
-                  );
-                },
+                      child: SizedBox(
+                        width: w,
+                        height: h,
+                        child: AspectRatio(
+                          aspectRatio: ar,
+                          child: CameraPreview(camera),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               );
             },
           ),
@@ -58,7 +74,7 @@ class CameraPane extends StatelessWidget {
               ),
             ),
           ),
-          // Indicador de carga mientras el servidor procesa la sena.
+          // Indicador de carga mientras el servidor procesa la seña.
           Positioned.fill(
             child: Obx(
               () => _ProcessingOverlay(
@@ -68,10 +84,10 @@ class CameraPane extends StatelessWidget {
           ),
           const Positioned(left: 20, top: 18, child: _CameraBadge()),
           // Boton pequeno para detener / reanudar la deteccion.
-          Positioned(
+          const Positioned(
             right: 16,
-            top: 16,
-            child: Obx(() => const _DetectionToggle()),
+            bottom: 16,
+            child: _DetectionToggle(),
           ),
         ],
       ),
@@ -79,49 +95,52 @@ class CameraPane extends StatelessWidget {
   }
 }
 
-/// Boton compacto que pausa o reanuda la deteccion de senas.
+/// Boton compacto que pausa o reanuda la deteccion de señas.
 class _DetectionToggle extends StatelessWidget {
   const _DetectionToggle();
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<RecognitionController>();
-    final live = controller.liveEnabled.value;
-
-    return Material(
-      color: AppTheme.white,
-      shape: RoundedRectangleBorder(
-        side: const BorderSide(color: AppTheme.black),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8),
-        onTap: controller.cameraReady.value ? controller.toggleLive : null,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                live ? Icons.stop_circle_outlined : Icons.play_circle_outline,
-                size: 16,
-                color: AppTheme.black,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                live ? 'DETENER' : 'REANUDAR',
-                style: const TextStyle(
+    // El Obx lee los observables DENTRO de su closure (uso correcto).
+    return Obx(() {
+      final live = controller.liveEnabled.value;
+      final ready = controller.cameraReady.value;
+      return Material(
+        color: AppTheme.white,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: AppTheme.black),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: ready ? controller.toggleLive : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  live ? Icons.stop_circle_outlined : Icons.play_circle_outline,
+                  size: 16,
                   color: AppTheme.black,
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
                 ),
-              ),
-            ],
+                const SizedBox(width: 6),
+                Text(
+                  live ? 'DETENER' : 'REANUDAR',
+                  style: const TextStyle(
+                    color: AppTheme.black,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -157,7 +176,7 @@ class _ProcessingOverlay extends StatelessWidget {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'Procesando sena...',
+                    'Procesando seña...',
                     style: TextStyle(
                       color: AppTheme.white,
                       fontSize: 12,
